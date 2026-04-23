@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard | Kavindu Portfolio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <style>
+    body {
+      font-family: 'Outfit', sans-serif;
+      background-color: #050510;
+      color: #fff;
+    }
+    .glass-card {
+      background: rgba(17, 17, 40, 0.7);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(124, 58, 237, 0.2);
+      border-radius: 1rem;
+    }
+    .message-card {
+      transition: all 0.3s ease;
+    }
+    .message-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(124, 58, 237, 0.5);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+    .gradient-text {
+      background: linear-gradient(to right, #7C3AED, #A855F7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="min-h-screen relative">
+  
+  <!-- Login Overlay -->
+  <div id="login-overlay" class="fixed inset-0 z-[100] bg-[#050510] flex items-center justify-center">
+    <div class="glass-card p-8 w-full max-w-md mx-4">
+      <div class="text-center mb-8">
+        <h2 class="text-3xl font-black tracking-tight mb-2">
+          <span class="text-[#7C3AED]">K</span>avindu<span class="text-white/50">.</span> Admin
+        </h2>
+        <p class="text-gray-400">Please login to access the dashboard</p>
+      </div>
+      
+      <form id="login-form" class="space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Username</label>
+          <input type="text" id="username" class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#7C3AED] transition-colors" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-400 mb-1">Password</label>
+          <input type="password" id="password" class="w-full bg-black/30 border border-white/10 rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#7C3AED] transition-colors" required>
+        </div>
+        <div id="login-error" class="hidden text-red-400 text-sm text-center">Invalid username or password</div>
+        <button type="submit" class="w-full bg-[#7C3AED] hover:bg-[#6D28D9] rounded-lg px-4 py-3 font-medium transition-colors mt-4">
+          Login to Dashboard
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <aside class="fixed left-0 top-0 w-64 h-screen glass-card border-l-0 border-y-0 rounded-none z-50">
+    <div class="p-6">
+      <a href="index.html" class="text-2xl font-black tracking-tight">
+        <span class="text-[#7C3AED]">K</span>avindu<span class="text-white/50">.</span> Admin
+      </a>
+    </div>
+    <nav class="mt-6 px-4 space-y-2">
+      <a href="#" class="flex items-center gap-3 px-4 py-3 bg-[#7C3AED]/10 text-[#A855F7] rounded-lg transition-colors border border-[#7C3AED]/20">
+        <i class="fas fa-inbox"></i>
+        <span class="font-medium">Messages</span>
+      </a>
+      <a href="index.html" class="flex items-center gap-3 px-4 py-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors">
+        <i class="fas fa-globe"></i>
+        <span class="font-medium">View Website</span>
+      </a>
+      <button onclick="logout()" class="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg transition-colors mt-4">
+        <i class="fas fa-sign-out-alt"></i>
+        <span class="font-medium">Logout</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="ml-64 p-8">
+    <header class="flex justify-between items-center mb-10">
+      <div>
+        <h1 class="text-3xl font-bold">Dashboard</h1>
+        <p class="text-gray-400 mt-1">Manage your website messages and inquiries.</p>
+      </div>
+      <button onclick="fetchMessages()" class="px-4 py-2 bg-[#7C3AED] hover:bg-[#6D28D9] rounded-lg font-medium transition-colors flex items-center gap-2">
+        <i class="fas fa-sync-alt" id="refresh-icon"></i>
+        Refresh
+      </button>
+    </header>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+      <div class="glass-card p-6 flex items-center gap-4">
+        <div class="w-12 h-12 rounded-full bg-[#7C3AED]/20 flex items-center justify-center text-[#A855F7] text-xl">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <div>
+          <p class="text-gray-400 text-sm">Total Messages</p>
+          <p class="text-2xl font-bold" id="total-messages">0</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Messages List -->
+    <div>
+      <h2 class="text-xl font-semibold mb-6 flex items-center gap-2">
+        <i class="fas fa-inbox text-[#7C3AED]"></i> Recent Inquiries
+      </h2>
+      
+      <div id="loading" class="text-center py-10 text-gray-400">
+        <i class="fas fa-circle-notch fa-spin text-3xl text-[#7C3AED] mb-3"></i>
+        <p>Loading messages...</p>
+      </div>
+
+      <div id="error-msg" class="hidden text-center py-10 text-red-400 glass-card border-red-500/30">
+        <i class="fas fa-exclamation-triangle text-3xl mb-3"></i>
+        <p>Could not connect to the Python Backend. Please make sure it is running on port 8000.</p>
+      </div>
+
+      <div id="empty-msg" class="hidden text-center py-10 text-gray-500 glass-card">
+        <i class="fas fa-ghost text-4xl mb-3 opacity-50"></i>
+        <p>No messages yet. They will appear here when someone contacts you.</p>
+      </div>
+
+      <div id="messages-container" class="grid gap-4">
+        <!-- Messages will be injected here by JS -->
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // Login Logic
+    const loginOverlay = document.getElementById('login-overlay');
+    const loginForm = document.getElementById('login-form');
+    const loginError = document.getElementById('login-error');
+
+    // Check login status
+    if (sessionStorage.getItem('admin_logged_in') === 'true') {
+      loginOverlay.classList.add('hidden');
+      fetchMessages();
+    }
+
+    loginForm?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const user = document.getElementById('username').value;
+      const pass = document.getElementById('password').value;
+
+      // Default credentials
+      if (user === 'kavindu' && pass === 'kavindu123') {
+        sessionStorage.setItem('admin_logged_in', 'true');
+        loginOverlay.classList.add('hidden');
+        loginError.classList.add('hidden');
+        fetchMessages();
+      } else {
+        loginError.classList.remove('hidden');
+      }
+    });
+
+    function logout() {
+      sessionStorage.removeItem('admin_logged_in');
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      loginOverlay.classList.remove('hidden');
+      document.getElementById('messages-container').innerHTML = '';
+      document.getElementById('total-messages').textContent = '0';
+    }
+
+    async function fetchMessages() {
+      const loading = document.getElementById('loading');
+      const errorMsg = document.getElementById('error-msg');
+      const emptyMsg = document.getElementById('empty-msg');
+      const container = document.getElementById('messages-container');
+      const totalEl = document.getElementById('total-messages');
+      const refreshIcon = document.getElementById('refresh-icon');
+
+      // UI state
+      refreshIcon.classList.add('fa-spin');
+      loading.classList.remove('hidden');
+      errorMsg.classList.add('hidden');
+      emptyMsg.classList.add('hidden');
+      container.innerHTML = '';
+
+      try {
+        const response = await fetch('http://localhost:8000/api/messages');
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        totalEl.textContent = data.length;
+        
+        if (data.length === 0) {
+          emptyMsg.classList.remove('hidden');
+        } else {
+          // Reverse to show newest first
+          data.reverse().forEach(msg => {
+            const date = new Date(msg.timestamp).toLocaleString();
+            const card = document.createElement('div');
+            card.className = 'glass-card p-6 message-card';
+            card.innerHTML = `
+              <div class="flex justify-between items-start mb-4">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#7C3AED] to-[#A855F7] flex items-center justify-center font-bold text-lg">
+                    ${msg.firstName.charAt(0)}${msg.lastName.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 class="font-bold text-lg">${msg.firstName} ${msg.lastName}</h3>
+                    <a href="mailto:${msg.email}" class="text-[#A855F7] text-sm hover:underline">${msg.email}</a>
+                  </div>
+                </div>
+                <div class="text-gray-500 text-xs text-right">
+                  <i class="far fa-clock mr-1"></i> ${date}
+                </div>
+              </div>
+              <div class="bg-black/30 p-4 rounded-lg border border-white/5">
+                <h4 class="font-semibold mb-2 text-gray-200">Subject: ${msg.subject}</h4>
+                <p class="text-gray-400 whitespace-pre-wrap text-sm leading-relaxed">${msg.message}</p>
+              </div>
+            `;
+            container.appendChild(card);
+          });
+        }
+      } catch (error) {
+        console.error('Error fetching messages:', error);
+        errorMsg.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+        setTimeout(() => refreshIcon.classList.remove('fa-spin'), 500);
+      }
+    }
+
+    // (Messages are fetched automatically upon successful login)
+  </script>
+</body>
+</html>
